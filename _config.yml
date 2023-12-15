@@ -46,13 +46,13 @@ relative_link: false
 future: true
 syntax_highlighter: highlight.js
 highlight:
-  line_number: true
+  line_number: false
   auto_detect: false
   tab_replace: ''
   wrap: true
   hljs: false
 prismjs:
-  preprocess: true
+  preprocess: false
   line_number: true
   tab_replace: ''
 
@@ -105,3 +105,19 @@ deploy:
   type: 'git'
   repo: git@github.com:wangfanming/wangfanming.github.io.git
   branch: main
+
+symbols_count_time:
+ #文章内是否显示
+  symbols: true
+  time: true
+ # 网页底部是否显示
+  total_symbols: true
+  total_time: true
+
+# 通用站点地图
+sitemap:
+  path: sitemap.xml
+# 百度站点地图
+baidusitemap:
+  path: baidusitemap.xml
+
