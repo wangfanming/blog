@@ -1,8 +1,19 @@
+---
+title: 使用Hexo搭建博客系统
+date: '2023/12/15 22:53:31'
+categories:
+  - Web
+tags:
+  - Hexo
+abbrlink: 47056
+---
 # 使用Hexo搭建博客系统
 
 ## Hexo简介
 
 Hexo是一款基于Node.js的静态博客框架，依赖少易于安装使用，可以方便的生成静态网页托管在GitHub和Coding上，是搭建博客的首选框架。大家可以进入[Hexo官网](https://hexo.io/zh-cn/index.html)进行详细查看。
+
+<!--more-->
 
 ## Hexo搭建步骤
 

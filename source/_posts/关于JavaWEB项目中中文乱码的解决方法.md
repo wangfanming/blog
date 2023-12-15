@@ -25,6 +25,9 @@ date: 2017-05-12 16:44:33
     name = request.getParameter("name");
 ```
 此时获取到的name的值一定是乱码，此时就要进行中文乱码处理了。
+
+<!--more-->
+
 ## 处理方案可根据请求的类型分为两类:
 **POST请求**：
 ```shell

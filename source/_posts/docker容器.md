@@ -1,10 +1,11 @@
 ---
-title: keepalived入门
+title: Docker容器技术
 date: '2019/8/28 10:53:31'
 categories:
-- Web
+  - Web
 tags:
-- 虚拟化
+  - 虚拟化
+abbrlink: 960
 ---
 # Docker
 
