@@ -140,13 +140,13 @@ abbrlink: 960
 **systemctl命令是系统服务管理器指令，是service和chkconfig两个命令的组合**
 
 #### Docker镜像的结构
-![](https://github.com/wangfanming/wangfanming.GitHub.io/blob/master/image/docker镜像的结构.bmp)
+![docker镜像的结构](/images/docker镜像的结构.bmp)
 
 #### 列出镜像
 
 列出docker下的所有镜像：`docker images`
 
-![](https://github.com/wangfanming/wangfanming.GitHub.io/blob/master/image/列出docker下的镜像信息.bmp)
+![docker下的镜像信息](/images/列出docker下的镜像信息.bmp)
 
 - REPOSITORY： 镜像所在的仓库名称
 
@@ -184,7 +184,7 @@ docker.io/ubunto:12.04 /bin/bash`， 表明从镜像 Ubuntu:12.04 启动一个�
 2、搜索镜像
 `docker search 镜像名称` ，例如：`docker search tomcat`
 
-![](https://github.com/wangfanming/wangfanming.GitHub.io/blob/master/image/搜索镜像.bmp)
+![image/搜索镜像](/images/搜索镜像.bmp)
 
 - NAME： 仓库名称
 - DESCRIPTION： 镜像描述
@@ -264,7 +264,7 @@ mysql -uroot -p
 即可映射至容器内的3306端口，连接上容器内的MySQL，然后就可以像操作普通MySQL数据库
 一样，对容器内MySQL数据库进行操作。
 
-![](https://github.com/wangfanming/wangfanming.GitHub.io/blob/master/image/连接容器内mysql.bmp)
+![连接容器内mysql](/images/连接容器内mysql.bmp)
 
 5、查看容器IP地址
 
@@ -272,7 +272,7 @@ mysql -uroot -p
 
 `docker inspect pinyougou_mysql`
 
-![](https://github.com/wangfanming/wangfanming.GitHub.io/blob/master/image/查看容器运行情况.bmp)
+![查看容器运行情况](/images/查看容器运行情况.bmp)
 
 也可以使用以下命令直接输出IP地址：
 
