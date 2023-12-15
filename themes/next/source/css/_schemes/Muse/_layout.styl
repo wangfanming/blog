@@ -1,23 +1,30 @@
-header.header {
-  main-container();
+.header-inner, .main-inner, .footer-inner {
+  +mobile() {
+    width: auto;
+  }
+}
+
+.header-inner {
+  padding-top: 100px;
+
+  +mobile() {
+    padding-top: 50px;
+  }
 }
 
 .main-inner {
-  main-container();
-  padding-bottom: $content-padding-bottom;
+  padding-bottom: 60px;
+}
+
+.content {
+  padding-top: 70px;
 
   +mobile() {
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-top: 35px;
   }
 }
 
-// Page - Container
-// --------------------------------------------------
-.post-block:first-of-type {
-  padding-top: $posts-first-padding;
-
-  +mobile() {
-    padding-top: $posts-first-padding-mobile;
-  }
+embed {
+  display: block;
+  margin: 0 auto 25px auto;
 }

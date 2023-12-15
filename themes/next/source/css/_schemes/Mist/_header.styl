@@ -1,10 +1,10 @@
 // Header
 // --------------------------------------------------
-.column {
+.header {
   background: var(--content-bg-color);
 }
 
-header.header {
+.header-inner {
   align-items: center;
   display: flex;
   padding: 20px 0;
@@ -12,6 +12,7 @@ header.header {
   +mobile() {
     display: block;
     padding: 10px 0;
+    width: auto;
   }
 }
 
@@ -19,6 +20,8 @@ header.header {
   line-height: normal;
 
   .brand {
+    padding: 2px 1px;
+
     +mobile() {
       display: block;
     }
@@ -29,27 +32,31 @@ header.header {
   }
 }
 
-.logo-line {
-  background: var(--brand-color);
+.logo-line-before, .logo-line-after {
   display: block;
-  height: 2px;
   margin: 0 auto;
+  overflow: hidden;
   width: 75%;
 
   +mobile() {
     display: none;
   }
+
+  i {
+    background: var(--brand-color);
+    display: block;
+    height: 2px;
+    position: relative;
+  }
 }
 
 .use-motion {
-  .logo-line:first-of-type {
-    transform: scaleX(0);
-    transform-origin: left;
+  .logo-line-before i {
+    left: -100%;
   }
 
-  .logo-line:last-of-type {
-    transform: scaleX(0);
-    transform-origin: right;
+  .logo-line-after i {
+    right: -100%;
   }
 }
 
