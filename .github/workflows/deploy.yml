@@ -77,9 +77,10 @@ jobs:
           npm install -g hexo-cli --save
           npm i -S hexo-prism-plugin -g
           npm install hexo-generator-search --save -g
-          npm i hexo-permalink-pinyin  -g
-          npm i --save hexo-wordcount -g
-          npm install hexo-generator-feed  -g
+          npm i hexo-permalink-pinyin --save  -g
+          npm i --save hexo-wordcount --save -g
+          npm install hexo-generator-feed --save  -g
+          npm i -S hexo-plugin-gitalk --save -g
           echo "install hexo successful"
 
       - name: Build Blog # 编译创建静态博客文件
