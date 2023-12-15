@@ -1,6 +1,16 @@
-﻿# MyCat分片
+﻿---
+title: MyCat分片
+date: '2019/3/28 10:43:32'
+categories:
+  - Web
+tags:
+  - MyCat
+  - 分库分表
+---
 
-标签（空格分隔）： MyCat
+
+
+# MyCat分片
 
 ---
 
@@ -14,7 +24,7 @@
 - JDK :  1.7及以上版本
 - MySQL: mysql5.5以上版本
 
-###Mysql安装与启动步骤：
+#### Mysql安装与启动步骤：
 
  1. 将MySQL的服务端和客户端安装包(RPM)上传到服务器
  2. 查询之前是否安装过MySQL
@@ -31,10 +41,12 @@
 `mysql -uroot -p密码`
  8. 设置远程登录权限
  `GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'IDENTIFIED BY '123456' WITH GRANT OPTION;`
-`flush privileges;`
+ `flush privileges;`
 
-##MyCat分片
-####分片相关的概念
+#### MyCat分片
+
+##### 分片相关的概念
+
 - 逻辑库(schema) 
 >&emsp;&emsp;前面一节讲了数据库中间件， 通常对实际应用来说， 并不需要知道中间件的存在， 业务开发
 人员只需要知道数据库的概念， 所以数据库中间件可以被看做是一个或多个数据库集群构成
@@ -56,8 +68,10 @@
 -分片规则(rule)
 >&emsp;&emsp;一个大表被分成若干个分片表，就需要一定的规则，这样按照某种业务规则把数据分到某个分片的规则就是分片规则，数据切分选择选择合适的分片规则非常重要，将极大的避免后续数据处理的难度。
 
-###MyCat分片配置
-#####配置schema.xml
+#### MyCat分片配置
+
+##### 配置schema.xml
+
 >schema 标签用于定义MyCat实例中的逻辑库
 &emsp;
 Table 标签定义了MyCat中的逻辑表 
@@ -67,7 +81,7 @@ rule 用于指定分片规则，auto-sharding-long 的分片规则是按ID值的
 dataNode标签定义了MyCat中的数据节点，也就是数据分片。
 dataHost标签在mycat逻辑库中也是作为最底层的标签存在，直接定义了具体的数据库实例、读写分离配置和心跳语句。
 schema.xml配置如下：
-```shell
+```xml
 <?xml version="1.0"?>
 <!DOCTYPE mycat:schema SYSTEM "schema.dtd">
 <mycat:schema xmlns:mycat="http://org.opencloudb/">
@@ -88,15 +102,17 @@ password="123456">
 </dataHost>
 </mycat:schema>
 ```
-#####配置server.xml
+##### 配置server.xml
+
 server.xml几乎保存了mycat需要的系统配置信息。最常见的是在此配置用户名、密码以及权限。
 server.xml配置如下：
 添加UTF-8字符集设置，否则存储中文会出现问号
-```shell
+
+```xml
 <property name="charset">utf8</property>
 ```
 修改user的设置，为TESTDB添加root、test用户
-```shell
+```xml
 <user name="test">
 <property name="password">test</property>
 <property name="schemas">TESTDB</property>
@@ -106,12 +122,14 @@ server.xml配置如下：
 <property name="schemas">TESTDB</property>
 </user>
 ```
-#####MyCat分片测试
+##### MyCat分片测试
+
 进入逻辑库TESTDB
 `# mysql -uroot -p123456 -P8066 -DTESTDB`
 `show tables;`会发现已经有表`tb_test`
 执行以下语句创建一个表
-```shell
+
+```sql
 CREATE TABLE tb_test (
 id BIGINT(20) NOT NULL,
 title VARCHAR(100) NOT NULL ,
@@ -122,12 +140,13 @@ PRIMARY KEY (id)
 
 然后就可以向逻辑库中的逻辑表中插入数据，数据会按照分片规则进行分片存储。
 
-#####MyCat分片规则
+##### MyCat分片规则
+
 rule.xml用于定义分片规则
 
 1. 按主键范围分片(rang-long)
- 
-```shell
+
+```xml
     <tableRule name="auto-sharding-long">
         <rule>
             <columns>id</columns>
@@ -143,7 +162,7 @@ rule.xml用于定义分片规则
 
 **rang-long**的定义：
 
-```shell
+```js
     <function name="rang-long"
         class="org.opencloudb.route.function.AutoPartitionByLong">
         <property name="mapFile">autopartition-long.txt</property>
@@ -163,7 +182,7 @@ rule.xml用于定义分片规则
 
  2. 一致性哈希murmur
  当我们需要将数据平均分在几个分区中，需要使用一致性hash规则
-```shell
+```xml
 <function name="murmur"
      class="org.opencloudb.route.function.PartitionByMurmurHash">
     <property name="seed">0</property><!--     默认是 0 -->
@@ -177,7 +196,7 @@ rule.xml用于定义分片规则
 </function>
 ```
 配置文件中表规则的定义：
-```shell
+```xml
 <tableRule name="sharding-by-murmur">
     <rule>
     <columns>id</columns>

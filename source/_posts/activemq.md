@@ -1,11 +1,15 @@
-# 消息中间件--ActiveMQ
-
-ActiveMQ 消息中间件
-
 ---
+title:  消息中间件-ActiveMQ
+categories:
+  - Web
+tags:
+  - 搜索引擎
+date: 2017-10-22 09:34:21
+---
+
 ## 1.1 JMS简介
 >JMS（Java Messaging Service） 是 Java 平台上有关面向消息中间件的技术规范， 它便于消息系统中的Java应用程序进行消息交换,并且通过提供标准的产生、发送、 接收消息的接口简化企业应用的开发。
-        
+
 ## 1.2 ActiveMQ简介
 >ActiveMQ 是 Apache 出品， 最流行的， 能力强劲的开源消息总线。 ActiveMQ 是一个完全支持 JMS1.1 和 J2EE 1.4 规范的 JMS Provider 实现， 尽管 JMS 规范出台已经是很久的事情了，但是JMS在当今的J2EE应用中间仍然扮演着特殊的地位。
 
@@ -25,19 +29,19 @@ ActiveMQ 消息中间件
 ---
 ActiveMQ安装：
 下载并解压
-```
+```shell
 tar -zxvf apache-activemq-5.12.0-bin.tar.gz
 ```
 为apache-activemq-5.12.0赋权
-```
+```shell
 chmod 777 apache-activemq-5.12.0
 ```
 进入apache-activemq-5.12.0\bin，并且给activemq赋权
-```
+```shell
 chmod 755 activemq 
 ```
 启动
-```
+```shell
 ./activemq start
 ```
 ActiveMQ的默认管理端口：8161，通信端口：61616
@@ -55,7 +59,7 @@ ActiveMQ的默认管理端口：8161，通信端口：61616
 </dependency>
 ```
 (2) 创建QueueProducer(核心步骤)
-```
+```java
 //1、创建连接工厂
 ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFaction("tcp://192.168.25.133:61616");
 //2、获取连接
@@ -83,7 +87,7 @@ connection.close();
 ```
 
 (3)消息消费者
-```
+```java
 //1、创建连接工厂
 ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://192.168.25.133:61616");
 //2、获取连接
@@ -121,7 +125,7 @@ connection.close();
 
 (1)创建消息生产者
 
-```
+```java
 //1、创建连接工厂
 ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://192.168.25.133:61616");
 //2、创建连接
@@ -144,7 +148,7 @@ session.close();
 connection.close();
 ```
 (2)创建消息消费者
-```
+```java
 //1.创建连接工厂
 ActiveMQConnectionFactory connectionFactory=new
 ActiveMQConnectionFactory("tcp://192.168.25.133:61616");

@@ -1,4 +1,15 @@
-# Nginx的安装与静态网站部署
+---
+title: Nginx的安装与静态网站部署
+date: '2017/6/18 20:51:31'
+categories:
+  - Web
+tags:
+  - nginx
+  - 反向代理
+  - 负载均衡
+---
+
+
 
 ## Nginx简介
 
@@ -11,6 +22,8 @@
 - 反向代理，负载均衡。当单台服务器不能满足用户的请求时，需要用多台服务器集群可以使用
 nginx做反向代理。并且多台服务器可以平均分担负载，不会因为某台服务器负载过高宕机
 而某台服务器闲置的情况。
+
+<!--More-->
 
 ### Nginx在Linux下的安装
 环境：
@@ -84,7 +97,7 @@ openssl）
 >将前端静态页cart.html以及图片样式等资源，上传至 /usr/local/nginx/cart
 
 2、修改Nginx的修改配置文件：/usr/local/nginx/conf/nginx.conf
-```shell
+```json
 server {
     listen 81; # 对外访问端口
     server_name localhost;
@@ -104,7 +117,7 @@ server {
 3、域名绑定
 
 3.1 修改nginx.conf
-```shell
+```json
 server {
     listen 81; # 对外访问端口
     server_name cart.pinyougou.com;

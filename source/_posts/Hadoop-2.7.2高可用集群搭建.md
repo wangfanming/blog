@@ -1,7 +1,13 @@
-# Hadoop-2.7.2高可用集群搭建(Ubuntu14.04)
-Hadoop ， HA ,zookeeper
-
 ---
+title: Hadoop-2.7.2高可用集群搭建(Ubuntu14.04)
+date: '2020/8/31 08:53:31'
+categories:
+  - 大数据
+tags:
+  - hadoop
+  - HA
+---
+
 **以root用户身份进行配置**
 
 ### 环境需求：
@@ -112,7 +118,7 @@ Hadoop ， HA ,zookeeper
    (2)修改如下配置文件(在/home/hadoop-2.7.2/etc/hadoop/下)
 
    **修改core-site.xml**
-   ```shell
+   ```xml
    <configuration>
       <property>
             <name>fs.defaultFS</name>
@@ -133,7 +139,7 @@ Hadoop ， HA ,zookeeper
     </configuration>
    ```
    **修改hdfs-site.xml**
-   ```shell
+   ```xml
    <configuration>
        <property>
                <name>dfs.nameservices</name>
@@ -199,7 +205,7 @@ Hadoop ， HA ,zookeeper
    ```
 
    **修改mapred-site.xml**(刚解压的文件中没有给文件，将mapred-site-tempalte.xml复制一份即可)
-   ```shell
+   ```xml
    <configuration>
        <property>
                <name>mapreduce.framework.name</name>
@@ -209,7 +215,7 @@ Hadoop ， HA ,zookeeper
    ```
    **修改yarn-site.xml**
 
-```shell
+```xml
     
        <configuration>
        <!-- 开启RM高可用 -->
@@ -261,23 +267,24 @@ Hadoop ， HA ,zookeeper
 
 分别在文件hadoop-env.sh和yarn-env.sh中添加JAVA_HOME配置
 
-![](https://github.com/wangfanming/wangfanming.GitHub.io/blob/master/image/java_home.bmp)
+![](/images/java_home.bmp)
 
 5、将hadoop配置文件发送至另外两个节点
 ```shell
-   #scp -r /home/hadoop-2.7.2  node-2:/home/
-   #scp -r /home/hadoop-2.7.2  node-3:/home/
+scp -r /home/hadoop-2.7.2  node-2:/home/
+scp -r /home/hadoop-2.7.2  node-3:/home/
 ```
 6、给Hadoop配置环境变量(完整的环境变量配置如下)
 
-![](https://github.com/wangfanming/wangfanming.GitHub.io/blob/master/image/环境变量.bmp)
+![](/images/环境变量.bmp)
 
 
 
 7、将环境变量发送给另外两个节点
+
 ```shell
-   #scp -r /etc/profile  node-2:/etc
-   #scp -r /etc/profile  node-3:/etc
+scp -r /etc/profile  node-2:/etc
+scp -r /etc/profile  node-3:/etc
 ```
 
 **在发送完成后，都要使用`source /etc/profile`命令重新加载环境变量**
@@ -288,31 +295,31 @@ Hadoop ， HA ,zookeeper
 
 在node-1上：
 ```shell
-   #zkServer.sh start
-   #zkServer.sh status(要确保zookeeper服务已经启动)
-   #hadoop-daemons.sh start journalnode   (启动journalnode服务)
-   #hdfs zkfc –formatZK(格式化zkfc,让在zookeeper中生成ha节点,只需在第一次启动集群是格式化即可)
+zkServer.sh start
+zkServer.sh status(要确保zookeeper服务已经启动)
+hadoop-daemons.sh start journalnode   (启动journalnode服务)
+hdfs zkfc –formatZK(格式化zkfc,让在zookeeper中生成ha节点,只需在第一次启动集群是格式化即可)
 
-   #hadoop namenode -format (格式化hdfs,也只在第一次启动集群时格式化)
-   #hadoop-daemon.sh start namenode
+hadoop namenode -format (格式化hdfs,也只在第一次启动集群时格式化)
+hadoop-daemon.sh start namenode
 
 ```
 在node-2上(设置node-2为备份的namenode,所以需要在node-2上启动namenode进程)：
 ```shell
-   #hdfs namenode -bootstrapStandby(在第一次启动时执行)
-   #hadoop-daemon.sh start namenode
+hdfs namenode -bootstrapStandby(在第一次启动时执行)
+hadoop-daemon.sh start namenode
 ```
 启动datanode(任意节点都可以):
 ```shell
-   #hadoop-daemons.sh start datanode
+hadoop-daemons.sh start datanode
 ```
 在node-3上启动yarn；
 ```shell
-   #start-yarn.sh
+start-yarn.sh
 ```
 启动zkfc服务(任意节点都可以):
 ```shell
-   #hadoop-daemons.sh start zkfc
+hadoop-daemons.sh start zkfc
 ```
 
 
