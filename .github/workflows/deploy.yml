@@ -11,7 +11,7 @@ env:
   THEME_REPO: wangfanming/hexo-theme-next
   THEME_BRANCH: master
   DEPLOY_REPO: wangfanming/wangfanming.github.io
-  DEPLOY_BRANCH: master
+  DEPLOY_BRANCH: main
 
 jobs:
   build:
