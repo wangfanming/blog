@@ -114,6 +114,13 @@ symbols_count_time:
   total_symbols: true
   total_time: true
 
+# hexo-generator-searchdb
+search:
+  path: search.xml
+  field: post
+  format: html
+  limit: 10
+
 # 通用站点地图
 sitemap:
   path: sitemap.xml
