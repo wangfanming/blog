@@ -3,7 +3,7 @@ name: Duncan's Blog CI/CD
 on:
   push:
     branches:
-      - master
+      - [master,main]
 
 env:
   GIT_USER: wangfanming
