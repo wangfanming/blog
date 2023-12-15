@@ -719,7 +719,7 @@ livere_uid: # <your_uid>
 # Gitalk
 # For more information: https://gitalk.github.io
 gitalk:
-  enable: true
+  enable: false
   github_id: wangfanming
   repo: wangfanming.github.io
   client_id: f45be614020c764c6897
