@@ -103,8 +103,8 @@ theme: next
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
   type: 'git'
-  repository:
-    github: https://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@github.com/wangfanming/wangfanming.github.io.git,master
+  repo: https://github.com/wangfanming/wangfanming.github.io.git
+  branch: main
 
 symbols_count_time:
  #文章内是否显示
