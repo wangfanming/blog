@@ -1,59 +1,53 @@
-# 文件路径 .github/workflows/deployment.yml
-name: Deployment
+name: Duncan's Blog CI/CD # 脚本 workflow 名称
 
 on:
   push:
-    branches: main
+    branches: [main, master] # 当监测 main,master 的 push
+    paths: # 监测所有 source 目录下的文件变动，所有 yml,json 后缀文件的变动。
+      - '*.json'
+      - '**.yml'
+      - '**/source/**'
 
 jobs:
-  hexo-deployment:
-    runs-on: ubuntu-latest
-    env:
-      TZ: Asia/Shanghai
-
+  blog: # 任务名称
+    timeout-minutes: 30 # 设置 30 分钟超时
+    runs-on: ubuntu-latest # 指定最新 ubuntu 系统
     steps:
-    - name: Checkout source
-      uses: actions/checkout@v2
-      with:
-        submodules: true
+      - uses: actions/checkout@v2 # 拉取仓库代码
+      - uses: actions/setup-node@v2 # 设置 node.js 环境
+      - name: Cache node_modules # 缓存 node_modules，提高编译速度，毕竟每月只有 2000 分钟。
+        uses: actions/cache@v2 # 亲测 Github 服务器编译速度比我自己电脑都快，如果每次构建按5分钟计算，我们每个月可以免费部署 400 次，Github yyds！！！
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Init Node.js # 安装源代码所需插件
+        run: |
+          npm install
+          echo "Init node successful"
+      - name: Install Hexo-cli # 安装 Hexo
+        run: |
+          npm install -g hexo-cli --save
+          npm i -S hexo-prism-plugin -g
+          npm install hexo-generator-search --save -g
+          npm i hexo-permalink-pinyin  -g
+          npm i --save hexo-wordcount -g
+          npm install hexo-generator-feed  -g
+          echo "install hexo successful"
+      - name: Build Blog # 编译创建静态博客文件
+        run: |
+          hexo clean
+          hexo g
+          echo "Build blog successful"
+      - name: Deploy DoubleAm's Blog # 设置 git 信息并推送静态博客文件
+        run: |
+          git config --global user.name "wangfanming"
+          git config --global user.email "wangfanming1204@gmail.com"
+          hexo deploy
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '21.4.0'
-    
-#   - name: Cache node modules
-#     # 设置包缓存目录，避免每次下载
-#     uses: actions/cache@v2
-#     with:
-#       path: ~/.npm
-#       key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-
-    - name: Install hexo dependencies
-      # 下载 hexo-cli 脚手架及相关安装包
-      run: |
-        npm install hexo-cli -g
-        npm i -S hexo-prism-plugin -g
-        npm install hexo-generator-search --save -g
-        npm i hexo-permalink-pinyin  -g
-        npm i --save hexo-wordcount -g
-        npm install hexo-filter-github-emojis  -g
-        npm install hexo-generator-feed  -g
-        npm install
-
-    - name: Generate files
-      # 编译 markdown 文件
-      run: |
-        hexo clean
-        hexo generate
-
-      # 提交到我们的存放静态资源的仓库
-
-    - name: Build and Deploy
-
-      uses: y4code/hexo-deploy-action@master
-      env:
-        PERSONAL_TOKEN: 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
-        PUBLISH_REPOSITORY: wangfanming/wangfanming.github.io # The repository the action should deploy to.
-        BRANCH: master  # The branch the action should deploy to.
-        PUBLISH_DIR: ./public # The folder the action should deploy.
+      - run: echo "Deploy Successful!"
