@@ -56,4 +56,5 @@ jobs:
         git config --global user.email $GIT_EMAIL
         git commit -m "GitHub Actions Auto Builder at $(date +'%Y-%m-%d %H:%M:%S')"
         git commit -m "Site deployed by GitHub Actions"
-        git push --force --quiet "https://$HEXO_DEPLOY_PUB@$REPO" main:main
+        git pull 
+        git push -f --quiet "https://$HEXO_DEPLOY_PUB@$REPO" main:main
