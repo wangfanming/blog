@@ -45,6 +45,8 @@ jobs:
           hexo g
           echo "Build blog successful"
       - name: Deploy Duncan's Blog # 设置 git 信息并推送静态博客文件
+        env:
+          HEXO_DEPLOY_PRI: ${{secrets.HEXO_DEPLOY_PRI}}
         run: |
           mkdir -p ~/.ssh/
           echo "$HEXO_DEPLOY_PRI" > ~/.ssh/id_rsa
