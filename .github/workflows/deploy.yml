@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: Checkout source
-      uses: actions/checkout@v4
+      uses: actions/checkout@v2
       with:
         submodules: true
 
@@ -22,12 +22,12 @@ jobs:
       with:
         node-version: '21.4.0'
     
-    - name: Cache node modules
-      # 设置包缓存目录，避免每次下载
-      uses: actions/cache@v3
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+#   - name: Cache node modules
+#     # 设置包缓存目录，避免每次下载
+#     uses: actions/cache@v2
+#     with:
+#       path: ~/.npm
+#       key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
 
     - name: Install hexo dependencies
       # 下载 hexo-cli 脚手架及相关安装包
