@@ -45,6 +45,16 @@ jobs:
         with:
           node-version: ${{ matrix.node_version }}
 
+      - name: Cache NPM dependencies
+        uses: actions/cache@v2
+        with:
+            # npm cache files are stored in `~/.npm` on Linux/macOS
+            path: ~/.npm
+            # path: node_modules
+            key: ${{ runner.OS }}-npm-cache
+            restore-keys: |
+              ${{ runner.OS }}-npm-cache
+
       - name: Configuration environment
         env:
           HEXO_DEPLOY_PRI: ${{secrets.HEXO_DEPLOY_PRI}}
@@ -58,11 +68,24 @@ jobs:
           git config --global user.email $GIT_EMAIL
           cp _config.next.yml themes/next/_config.yml
 
-      - name: Install dependencies
+      - name: Init Node.js # 安装源代码所需插件
         run: |
           npm install
-
-      - name: Deploy hexo
+          echo "Init node successful"
+      - name: Install Hexo-cli # 安装 Hexo
         run: |
-          npm run deploy
+          npm install -g hexo-cli --save
+          npm i -S hexo-prism-plugin -g
+          npm install hexo-generator-search --save -g
+          npm i hexo-permalink-pinyin  -g
+          npm i --save hexo-wordcount -g
+          npm install hexo-generator-feed  -g
+          echo "install hexo successful"
+
+      - name: Build Blog # 编译创建静态博客文件
+        run: |
+          hexo clean
+          hexo g
+          hexo deploy
+          echo "Build blog successful"
 
