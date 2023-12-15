@@ -98,13 +98,13 @@ ignore:
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
 theme: next
-GH_TOKEN: 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
+
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
   type: 'git'
   repository:
-    github: https://{$GH_TOKEN}@github.com/wangfanming/wangfanming.github.io.git,master
+    github: https://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@github.com/wangfanming/wangfanming.github.io.git,master
 
 symbols_count_time:
  #文章内是否显示
