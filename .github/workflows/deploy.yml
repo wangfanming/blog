@@ -44,15 +44,13 @@ jobs:
         hexo clean
         hexo generate
 
-    - name: Deploy to Github Pages
+      # 提交到我们的存放静态资源的仓库
+
+    - name: Build and Deploy
+
+      uses: y4code/hexo-deploy-action@master
       env:
-        GIT_NAME: wangfanming
-        GIT_EMAIL: wangfanming1204@gmail.com
-        REPO: github.com/wangfanming/wangfanming.github.io
-        HEXO_DEPLOY_PUB: ${{ secrets.HEXO_DEPLOY_PUB }}
-      run: |
-        cd ./public && git init && git add .
-        git config --global user.name $GIT_NAME
-        git config --global user.email $GIT_EMAIL
-        git commit -m "GitHub Actions Auto Builder at $(date +'%Y-%m-%d %H:%M:%S')"
-        git push -f  "https://$HEXO_DEPLOY_PUB@$REPO" master:master
+        PERSONAL_TOKEN: ${{ secrets.HEXO_DEPLOY_PUB }}
+        PUBLISH_REPOSITORY: wangfanming/wangfanming.github.io # The repository the action should deploy to.
+        BRANCH: master  # The branch the action should deploy to.
+        PUBLISH_DIR: ./public # The folder the action should deploy.
