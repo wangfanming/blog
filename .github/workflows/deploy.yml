@@ -1,0 +1,59 @@
+# 文件路径 .github/workflows/deployment.yml
+name: Deployment
+
+on:
+  push:
+    branches: hexo
+
+jobs:
+  hexo-deployment:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Shanghai
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '21.4.0'
+    
+    - name: Cache node modules
+      # 设置包缓存目录，避免每次下载
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
+    - name: Install hexo dependencies
+      # 下载 hexo-cli 脚手架及相关安装包
+      run: |
+        npm install -g hexo-cli
+        npm install
+        npm install -g hexo-generator-searchdb --save
+        npm install -g hexo-generator-sitemap --save
+        npm install -g hexo-symbols-count-time --save
+
+    - name: Generate files
+      # 编译 markdown 文件
+      run: |
+        hexo clean
+        hexo generate
+
+    - name: Deploy to Github Pages
+      env:
+        GIT_NAME: wangfanming
+        GIT_EMAIL: wangfanming1204@gmail.com
+        REPO: github.com/wangfanming/wangfanming.github.io
+        HEXO_DEPLOY_PUB: ${{ secrets.HEXO_DEPLOY_PUB }}
+      run: |
+        cd ./public && git init && git add .
+        git config --global user.name $GIT_NAME
+        git config --global user.email $GIT_EMAIL
+        git commit -m "GitHub Actions Auto Builder at $(date +'%Y-%m-%d %H:%M:%S')"
+        git commit -m "Site deployed by GitHub Actions"
+        git push --force --quiet "https://$HEXO_DEPLOY_PUB@$REPO" main:main
