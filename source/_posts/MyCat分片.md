@@ -19,8 +19,10 @@ tags:
 &emsp;&emsp;Mycat 是基于 cobar 演变而来， 对 cobar 的代码进行了彻底的重构， 使用 NIO 重构了网络模块，并且优化了Buffer 内核， 增强了聚合，oin等基本特性， 同时兼容绝大多数数据库成为通用的数据库中间件。简单的说， MyCAT 就是： 一个新颖的数据库中间件产品支持 mysql 集群，或者mariadbcluster， 提供高可用性数据分片集群。你可以像使用 mysql 一样使用 mycat。 对于开
 发人员来说根本感觉不到mycat的存在。
 
----
+<!--more-->
+
 ## 环境需求
+
 - JDK :  1.7及以上版本
 - MySQL: mysql5.5以上版本
 
@@ -41,7 +43,7 @@ tags:
 `mysql -uroot -p密码`
  8. 设置远程登录权限
  `GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'IDENTIFIED BY '123456' WITH GRANT OPTION;`
- `flush privileges;`
+  `flush privileges;`
 
 #### MyCat分片
 

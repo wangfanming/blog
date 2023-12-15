@@ -15,6 +15,8 @@ tags:
 - Hadoop版本：hadoop-2.7.2
 - zookeeper版本：zookeeper-3.4.5
 
+<!--more-->
+
 #### 详细配置
 
 | 主机名IP      | Namenode         | Datanode  | Yarn   | Zookeeper |JournalNode |
