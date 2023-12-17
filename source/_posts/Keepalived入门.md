@@ -7,8 +7,6 @@ tags:
   - 分布式
 abbrlink: 3221
 ---
-# keepalived入门
-
 ## keepalived简介
 >&emsp;&emsp;keepalived是集群管理中保证集群高可用的一个服务软件，用来防止单点故障。
 

@@ -9,11 +9,6 @@ tags:
 ---
 
 
-
-# MyCat分片
-
----
-
 ## MyCat简介
 >&emsp;&emsp;Mycat 背后是阿里曾经开源的知名产品——Cobar。 Cobar的核心功能和优势是MySQL数据库分片。
 &emsp;&emsp;Mycat 是基于 cobar 演变而来， 对 cobar 的代码进行了彻底的重构， 使用 NIO 重构了网络模块，并且优化了Buffer 内核， 增强了聚合，oin等基本特性， 同时兼容绝大多数数据库成为通用的数据库中间件。简单的说， MyCAT 就是： 一个新颖的数据库中间件产品支持 mysql 集群，或者mariadbcluster， 提供高可用性数据分片集群。你可以像使用 mysql 一样使用 mycat。 对于开
