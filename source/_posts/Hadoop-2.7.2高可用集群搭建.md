@@ -6,6 +6,7 @@ categories:
 tags:
   - hadoop
   - HA
+abbrlink: 37330
 ---
 
 **以root用户身份进行配置**

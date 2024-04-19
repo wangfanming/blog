@@ -1,5 +1,6 @@
 ---
 title: Spark collect方法分析-Executor端
+abbrlink: 2768
 date: 2023-12-17 15:21:04
 tags:
 ---

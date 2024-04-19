@@ -1,9 +1,10 @@
 ---
-title:  消息中间件-ActiveMQ
+title: 消息中间件-ActiveMQ
 categories:
   - Web
 tags:
   - 搜索引擎
+abbrlink: 16634
 date: 2017-10-22 09:34:21
 ---
 

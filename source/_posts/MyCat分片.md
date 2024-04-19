@@ -1,4 +1,4 @@
-﻿---
+---
 title: MyCat分片
 date: '2019/3/28 10:43:32'
 categories:
@@ -6,6 +6,7 @@ categories:
 tags:
   - MyCat
   - 分库分表
+abbrlink: 7714
 ---
 
 
