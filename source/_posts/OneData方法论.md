@@ -6,6 +6,7 @@ categories:
 tags:
   - OneData
   - Hive
+abbrlink: 55311
 ---
 
 # OneData数据治理方法论
