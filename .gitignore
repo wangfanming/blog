@@ -4,6 +4,7 @@ db.json
 *.log
 node_modules/
 .deploy*/
-/tmp/
+tmp/
+themes/*
 public/
-/.idea/
+.idea/
