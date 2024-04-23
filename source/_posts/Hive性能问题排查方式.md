@@ -108,7 +108,7 @@ Hive执行计划目前可以查看到：
 
    我们使用同样数据及SQL语句，只是数据存储格式不同，得到如下执行时长：
 
-   ![数据存储格式对比](F:\study\blog\source\images\数据存储格式对比.png)
+   ![数据存储格式对比](images/数据存储格式对比.png)
 
    > 注：CPU时间：表示运行程序所占用服务器CPU资源的时间。用户等待耗时：记录的是用户从提交作业到返回结果期间用户等待的所有时间。
 
@@ -194,5 +194,5 @@ Hive执行计划目前可以查看到：
 
 
 
-[]: https://cloud.tencent.com/developer/article/1893127
+[1]: https://cloud.tencent.com/developer/article/1893127
 

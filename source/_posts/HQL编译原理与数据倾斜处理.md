@@ -235,5 +235,5 @@ select dealid, count(distinct uid) num from order group by dealid;
 
 ​	通过以上对数据倾斜场景的分析，不难看出，shuffle阶段最易发生数据倾斜，而且shuffle的过程也会产生大量的磁盘I/O、网络I/O以及压缩/解压缩、序列化/反序列化等。
 
-[]: https://mp.weixin.qq.com/s?__biz=MzI0NjU2NDkzMQ==&amp;amp;mid=2247494450&amp;amp;idx=1&amp;amp;sn=389e3f6bbd89221bd46643ca6279d117&amp;amp;chksm=e9bffa1edec873080f725a6828fabfb02fa95850f61bdbf3310e55d6adee641451bfc753da1e&amp;amp;scene=21#wechat_redirect
+[1]: https://mp.weixin.qq.com/s?__biz=MzI0NjU2NDkzMQ==&amp;amp;mid=2247494450&amp;amp;idx=1&amp;amp;sn=389e3f6bbd89221bd46643ca6279d117&amp;amp;chksm=e9bffa1edec873080f725a6828fabfb02fa95850f61bdbf3310e55d6adee641451bfc753da1e&amp;amp;scene=21#wechat_redirect
 
