@@ -1,3 +1,12 @@
+---
+title: LCX中运行copilot-service
+categories:
+  - 虚拟化
+tags:
+  - LCX
+
+---
+
 # LCX中运行copilot-service
 
 ## 简介
