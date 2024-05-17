@@ -676,4 +676,486 @@ spark-submit  --class org.apache.spark.examples.SparkPi \
      }
    ```
 
-至此，AM、Executor、用户编写的应用程序都启动起来类。关于用户应用程序的初始化过程，下次再分析。
+7. 接下来进行CoarseGrainedExecutorBackend的初始化过程，这里就涉及到了消息系统的初始化过程。
+
+   ```scala
+   private[spark] object CoarseGrainedExecutorBackend extends Logging {
+     def main(args: Array[String]) {
+       ...
+       run(driverUrl, executorId, hostname, cores, appId, workerUrl, userClassPath)
+       System.exit(0)
+     }
+     
+   private def run(
+         driverUrl: String,
+         executorId: String,
+         hostname: String,
+         cores: Int,
+         appId: String,
+         workerUrl: Option[String],
+         userClassPath: Seq[URL]) {
+   
+      ...
+      // 这里初始化了一个基于Netty的的消息系统，并且在初始化时会创建一个线程池，用于处理消息，且发送类一个OnStart事件用来启动消息处理
+         val env = SparkEnv.createExecutorEnv(
+           driverConf, executorId, hostname, cores, cfg.ioEncryptionKey, isLocal = false)
+   
+         env.rpcEnv.setupEndpoint("Executor", new CoarseGrainedExecutorBackend(
+           env.rpcEnv, driverUrl, executorId, hostname, cores, userClassPath, env))
+         workerUrl.foreach { url =>
+           env.rpcEnv.setupEndpoint("WorkerWatcher", new WorkerWatcher(env.rpcEnv, url))
+         }
+       // 启动消息处理线程
+         env.rpcEnv.awaitTermination()
+       }
+     }
+   
+   // 以下为消息处理线程相关信息，它们主要来自于org.apache.spark.rpc.netty.Dispatcher
+   override def awaitTermination(): Unit = {
+       dispatcher.awaitTermination()
+     }
+   def awaitTermination(): Unit = {
+       threadpool.awaitTermination(Long.MaxValue, TimeUnit.MILLISECONDS)
+     }
+   private val threadpool: ThreadPoolExecutor = {
+       val availableCores =
+         if (numUsableCores > 0) numUsableCores else Runtime.getRuntime.availableProcessors()
+       val numThreads = nettyEnv.conf.getInt("spark.rpc.netty.dispatcher.numThreads",
+         math.max(2, availableCores))
+       val pool = ThreadUtils.newDaemonFixedThreadPool(numThreads, "dispatcher-event-loop")
+       for (i <- 0 until numThreads) {
+         pool.execute(new MessageLoop)
+       }
+       pool
+     }
+     private class MessageLoop extends Runnable {
+       override def run(): Unit = {
+         try {
+           while (true) {
+             try {
+               val data = receivers.take()
+               if (data == PoisonPill) {
+                 // Put PoisonPill back so that other MessageLoops can see it.
+                 receivers.offer(PoisonPill)
+                 return
+               }
+                 // 开始处理消息
+               data.inbox.process(Dispatcher.this)
+             } catch {
+               case NonFatal(e) => logError(e.getMessage, e)
+             }
+           }
+         } catch {
+           case _: InterruptedException => // exit
+           case t: Throwable =>
+             try {
+               // Re-submit a MessageLoop so that Dispatcher will still work if
+               // UncaughtExceptionHandler decides to not kill JVM.
+               threadpool.execute(new MessageLoop)
+             } finally {
+               throw t
+             }
+         }
+       }
+     }
+   ```
+
+8. 创建一个基于Netty的消息系统
+
+   org.apache.spark.SparkEnv#createExecutorEnv:
+
+   ```scala
+     private[spark] def createExecutorEnv(
+         conf: SparkConf,
+         executorId: String,
+         hostname: String,
+         numCores: Int,
+         ioEncryptionKey: Option[Array[Byte]],
+         isLocal: Boolean): SparkEnv = {
+             // 初始化Executor的serializer,
+       //      closureSerializer,
+       //      serializerManager,
+       //      mapOutputTracker,
+       //      shuffleManager,
+       //      broadcastManager,
+       //      blockManager,
+       //      securityManager,
+       //      metricsSystem,
+       //      memoryManager,
+       //      outputCommitCoordinator组建，启动消息系统
+       val env = create(
+         conf,
+         executorId,
+         hostname,
+         hostname,
+         None,
+         isLocal,
+         numCores,
+         ioEncryptionKey
+       )
+       SparkEnv.set(env)
+       env
+     }
+   
+   private def create(
+         conf: SparkConf,
+         executorId: String,
+         bindAddress: String,
+         advertiseAddress: String,
+         port: Option[Int],
+         isLocal: Boolean,
+         numUsableCores: Int,
+         ioEncryptionKey: Option[Array[Byte]],
+         listenerBus: LiveListenerBus = null,
+         mockOutputCommitCoordinator: Option[OutputCommitCoordinator] = None): SparkEnv = {
+   
+       val isDriver = executorId == SparkContext.DRIVER_IDENTIFIER
+   
+       // Listener bus is only used on the driver
+       if (isDriver) {
+         assert(listenerBus != null, "Attempted to create driver SparkEnv with null listener bus!")
+       }
+   
+       val securityManager = new SecurityManager(conf, ioEncryptionKey)
+       if (isDriver) {
+         securityManager.initializeAuth()
+       }
+   
+       ioEncryptionKey.foreach { _ =>
+         if (!securityManager.isEncryptionEnabled()) {
+           logWarning("I/O encryption enabled without RPC encryption: keys will be visible on the " +
+             "wire.")
+         }
+       }
+   
+       val systemName = if (isDriver) driverSystemName else executorSystemName
+       // 创建一个基于Netty消息系统的分布式执行环境
+       val rpcEnv = RpcEnv.create(systemName, bindAddress, advertiseAddress, port.getOrElse(-1), conf,
+         securityManager, numUsableCores, !isDriver)
+       ...
+   
+       val serializer = instantiateClassFromConf[Serializer](
+         "spark.serializer", "org.apache.spark.serializer.JavaSerializer")
+       logDebug(s"Using serializer: ${serializer.getClass}")
+   
+       val serializerManager = new SerializerManager(serializer, conf, ioEncryptionKey)
+   ...
+   
+       val broadcastManager = new BroadcastManager(isDriver, conf, securityManager)
+   
+       val mapOutputTracker = if (isDriver) {
+         new MapOutputTrackerMaster(conf, broadcastManager, isLocal)
+       } else {
+         new MapOutputTrackerWorker(conf)
+       }
+   
+       // Have to assign trackerEndpoint after initialization as MapOutputTrackerEndpoint
+       // requires the MapOutputTracker itself
+       mapOutputTracker.trackerEndpoint = registerOrLookupEndpoint(MapOutputTracker.ENDPOINT_NAME,
+         new MapOutputTrackerMasterEndpoint(
+           rpcEnv, mapOutputTracker.asInstanceOf[MapOutputTrackerMaster], conf))
+   
+       // Let the user specify short names for shuffle managers
+       val shortShuffleMgrNames = Map(
+         "sort" -> classOf[org.apache.spark.shuffle.sort.SortShuffleManager].getName,
+         "tungsten-sort" -> classOf[org.apache.spark.shuffle.sort.SortShuffleManager].getName)
+       val shuffleMgrName = conf.get("spark.shuffle.manager", "sort")
+       val shuffleMgrClass =
+         shortShuffleMgrNames.getOrElse(shuffleMgrName.toLowerCase(Locale.ROOT), shuffleMgrName)
+       val shuffleManager = instantiateClass[ShuffleManager](shuffleMgrClass)
+   
+       val useLegacyMemoryManager = conf.getBoolean("spark.memory.useLegacyMode", false)
+       val memoryManager: MemoryManager =
+         if (useLegacyMemoryManager) {
+           new StaticMemoryManager(conf, numUsableCores)
+         } else {
+           UnifiedMemoryManager(conf, numUsableCores)
+         }
+   
+       val blockManagerPort = if (isDriver) {
+         conf.get(DRIVER_BLOCK_MANAGER_PORT)
+       } else {
+         conf.get(BLOCK_MANAGER_PORT)
+       }
+   
+       val blockTransferService =
+         new NettyBlockTransferService(conf, securityManager, bindAddress, advertiseAddress,
+           blockManagerPort, numUsableCores)
+   
+       val blockManagerMaster = new BlockManagerMaster(registerOrLookupEndpoint(
+         BlockManagerMaster.DRIVER_ENDPOINT_NAME,
+         new BlockManagerMasterEndpoint(rpcEnv, isLocal, conf, listenerBus)),
+         conf, isDriver)
+   
+       // NB: blockManager is not valid until initialize() is called later.
+       val blockManager = new BlockManager(executorId, rpcEnv, blockManagerMaster,
+         serializerManager, conf, memoryManager, mapOutputTracker, shuffleManager,
+         blockTransferService, securityManager, numUsableCores)
+   
+       val metricsSystem = if (isDriver) {
+         // Don't start metrics system right now for Driver.
+         // We need to wait for the task scheduler to give us an app ID.
+         // Then we can start the metrics system.
+         MetricsSystem.createMetricsSystem("driver", conf, securityManager)
+       } else {
+         // We need to set the executor ID before the MetricsSystem is created because sources and
+         // sinks specified in the metrics configuration file will want to incorporate this executor's
+         // ID into the metrics they report.
+         conf.set("spark.executor.id", executorId)
+         val ms = MetricsSystem.createMetricsSystem("executor", conf, securityManager)
+         ms.start()
+         ms
+       }
+   
+       val outputCommitCoordinator = mockOutputCommitCoordinator.getOrElse {
+         new OutputCommitCoordinator(conf, isDriver)
+       }
+       val outputCommitCoordinatorRef = registerOrLookupEndpoint("OutputCommitCoordinator",
+         new OutputCommitCoordinatorEndpoint(rpcEnv, outputCommitCoordinator))
+       outputCommitCoordinator.coordinatorRef = Some(outputCommitCoordinatorRef)
+   
+       val envInstance = new SparkEnv(
+         executorId,
+         rpcEnv,
+         serializer,
+         closureSerializer,
+         serializerManager,
+         mapOutputTracker,
+         shuffleManager,
+         broadcastManager,
+         blockManager,
+         securityManager,
+         metricsSystem,
+         memoryManager,
+         outputCommitCoordinator,
+         conf)
+   
+       // Add a reference to tmp dir created by driver, we will delete this tmp dir when stop() is
+       // called, and we only need to do it for driver. Because driver may run as a service, and if we
+       // don't delete this tmp dir when sc is stopped, then will create too many tmp dirs.
+       if (isDriver) {
+         val sparkFilesDir = Utils.createTempDir(Utils.getLocalDir(conf), "userFiles").getAbsolutePath
+         envInstance.driverTmpDir = Some(sparkFilesDir)
+       }
+   
+       envInstance
+     }
+   ```
+
+9. RpcEnv初始化过程
+
+   - org.apache.spark.rpc.RpcEnv#create:
+
+     ```scala
+       def create(
+           name: String,
+           bindAddress: String,
+           advertiseAddress: String,
+           port: Int,
+           conf: SparkConf,
+           securityManager: SecurityManager,
+           numUsableCores: Int,
+           clientMode: Boolean): RpcEnv = {
+         val config = RpcEnvConfig(conf, name, bindAddress, advertiseAddress, port, securityManager,
+           numUsableCores, clientMode)
+         new NettyRpcEnvFactory().create(config)
+       }
+     ```
+
+   - org.apache.spark.rpc.netty.NettyRpcEnvFactory#create
+
+     ```scala
+       def create(config: RpcEnvConfig): RpcEnv = {
+         val sparkConf = config.conf
+         // Use JavaSerializerInstance in multiple threads is safe. However, if we plan to support
+         // KryoSerializer in future, we have to use ThreadLocal to store SerializerInstance
+         val javaSerializerInstance =
+           new JavaSerializer(sparkConf).newInstance().asInstanceOf[JavaSerializerInstance]
+     
+         // 创建基于Netty框架的消息系统
+         val nettyEnv =
+           new NettyRpcEnv(sparkConf, javaSerializerInstance, config.advertiseAddress,
+             config.securityManager, config.numUsableCores)
+         if (!config.clientMode) {
+           val startNettyRpcEnv: Int => (NettyRpcEnv, Int) = { actualPort =>
+             // 向外部系统注册RPC服务
+             nettyEnv.startServer(config.bindAddress, actualPort)
+             (nettyEnv, nettyEnv.address.port)
+           }
+           try {
+             Utils.startServiceOnPort(config.port, startNettyRpcEnv, sparkConf, config.name)._1
+           } catch {
+             case NonFatal(e) =>
+               nettyEnv.shutdown()
+               throw e
+           }
+         }
+         nettyEnv
+       }
+     ```
+
+   - org.apache.spark.rpc.netty.Dispatcher#registerRpcEndpoint
+
+     ```scala
+       def registerRpcEndpoint(name: String, endpoint: RpcEndpoint): NettyRpcEndpointRef = {
+         val addr = RpcEndpointAddress(nettyEnv.address, name)
+         val endpointRef = new NettyRpcEndpointRef(nettyEnv.conf, addr, nettyEnv)
+         synchronized {
+           if (stopped) {
+             throw new IllegalStateException("RpcEnv has been stopped")
+           }
+           if (endpoints.putIfAbsent(name, new EndpointData(name, endpoint, endpointRef)) != null) {
+             throw new IllegalArgumentException(s"There is already an RpcEndpoint called $name")
+           }
+           val data = endpoints.get(name)
+           endpointRefs.put(data.endpoint, data.ref)
+           receivers.offer(data)  // for the OnStart message
+         }
+         endpointRef
+       }
+     ```
+
+   - EndpointData初始化
+
+     ```scala
+       private class EndpointData(
+           val name: String,
+           val endpoint: RpcEndpoint,
+           val ref: NettyRpcEndpointRef) {
+         val inbox = new Inbox(ref, endpoint)
+       }
+     
+     private[netty] class Inbox(
+         val endpointRef: NettyRpcEndpointRef,
+         val endpoint: RpcEndpoint)
+       extends Logging {
+     
+       inbox =>  // Give this an alias so we can use it more clearly in closures.
+     
+       @GuardedBy("this")
+       protected val messages = new java.util.LinkedList[InboxMessage]()
+     
+       /** True if the inbox (and its associated endpoint) is stopped. */
+       @GuardedBy("this")
+       private var stopped = false
+     
+       /** Allow multiple threads to process messages at the same time. */
+       @GuardedBy("this")
+       private var enableConcurrent = false
+     
+       /** The number of threads processing messages for this inbox. */
+       @GuardedBy("this")
+       private var numActiveThreads = 0
+     
+       // OnStart should be the first message to process
+       inbox.synchronized {
+         // 向消息队列内添加OnStart事件
+         messages.add(OnStart)
+       }
+     
+     ```
+
+   - Executor消息系统接收到OnStart事件后向Driver注册自己的信息,
+
+     org.apache.spark.executor.CoarseGrainedExecutorBackend#onStart:
+
+     ```scala
+       override def onStart() {
+         logInfo("Connecting to driver: " + driverUrl)
+         rpcEnv.asyncSetupEndpointRefByURI(driverUrl).flatMap { ref =>
+           // This is a very fast action so we can use "ThreadUtils.sameThread"
+           driver = Some(ref)
+           ref.ask[Boolean](RegisterExecutor(executorId, self, hostname, cores, extractLogUrls))
+         }(ThreadUtils.sameThread).onComplete {
+           // This is a very fast action so we can use "ThreadUtils.sameThread"
+           case Success(msg) =>
+             // Always receive `true`. Just ignore it
+           case Failure(e) =>
+             exitExecutor(1, s"Cannot register with driver: $driverUrl", e, notifyDriver = false)
+         }(ThreadUtils.sameThread)
+       }
+     ```
+
+   - Driver接收到RegisterExecutor事件的处理，org.apache.spark.scheduler.cluster.CoarseGrainedSchedulerBackend.DriverEndpoint#receiveAndReply：
+
+     ```scala
+     override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
+     
+           case RegisterExecutor(executorId, executorRef, hostname, cores, logUrls) =>
+             if (executorDataMap.contains(executorId)) {
+               executorRef.send(RegisterExecutorFailed("Duplicate executor ID: " + executorId))
+               context.reply(true)
+             } else if (scheduler.nodeBlacklist.contains(hostname)) {
+               // If the cluster manager gives us an executor on a blacklisted node (because it
+               // already started allocating those resources before we informed it of our blacklist,
+               // or if it ignored our blacklist), then we reject that executor immediately.
+               logInfo(s"Rejecting $executorId as it has been blacklisted.")
+               executorRef.send(RegisterExecutorFailed(s"Executor is blacklisted: $executorId"))
+               context.reply(true)
+             } else {
+               // If the executor's rpc env is not listening for incoming connections, `hostPort`
+               // will be null, and the client connection should be used to contact the executor.
+               val executorAddress = if (executorRef.address != null) {
+                   executorRef.address
+                 } else {
+                   context.senderAddress
+                 }
+               logInfo(s"Registered executor $executorRef ($executorAddress) with ID $executorId")
+               addressToExecutorId(executorAddress) = executorId
+               totalCoreCount.addAndGet(cores)
+               totalRegisteredExecutors.addAndGet(1)
+               val data = new ExecutorData(executorRef, executorAddress, hostname,
+                 cores, cores, logUrls)
+               // This must be synchronized because variables mutated
+               // in this block are read when requesting executors
+               CoarseGrainedSchedulerBackend.this.synchronized {
+                 executorDataMap.put(executorId, data)
+                 if (currentExecutorIdCounter < executorId.toInt) {
+                   currentExecutorIdCounter = executorId.toInt
+                 }
+                 if (numPendingExecutors > 0) {
+                   numPendingExecutors -= 1
+                   logDebug(s"Decremented number of pending executors ($numPendingExecutors left)")
+                 }
+               }
+                 // 向Executor发送RegisteredExecutor事件
+               executorRef.send(RegisteredExecutor)
+               // Note: some tests expect the reply to come after we put the executor in the map
+               context.reply(true)
+               listenerBus.post(
+                 SparkListenerExecutorAdded(System.currentTimeMillis(), executorId, data))
+               makeOffers()
+             }
+     
+     ```
+
+   - Executor接收到Driver回复的RegisteredExecutor消息后的处理：
+
+     ```scala
+     override def receive: PartialFunction[Any, Unit] = {
+         case RegisteredExecutor =>
+           logInfo("Successfully registered with driver")
+           try {
+             //向Driver注册成功后,创建Executor
+             executor = new Executor(executorId, hostname, env, userClassPath, isLocal = false)
+           } catch {
+             case NonFatal(e) =>
+               exitExecutor(1, "Unable to create executor due to " + e.getMessage, e)
+           }
+     
+         case RegisterExecutorFailed(message) =>
+           exitExecutor(1, "Slave registration failed: " + message)
+         // 接收LaunchTask中的TaskSet,进行处理
+         case LaunchTask(data) =>
+           if (executor == null) {
+             exitExecutor(1, "Received LaunchTask command but executor was null")
+           } else {
+             val taskDesc = TaskDescription.decode(data.value)
+             logInfo("Got assigned task " + taskDesc.taskId)
+             executor.launchTask(this, taskDesc)
+           }
+     
+     ```
+
+   至此，spark的AM、Executor都已经成功启动，等待用户程序被解析成DAG后，生成TaskSet交由Executor开始执行。
+
