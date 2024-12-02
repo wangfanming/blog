@@ -14,7 +14,7 @@
   "dependencies": {
     "firebase": "^10.7.1",
     "gitalk": "^1.8.0",
-    "hexo": "^7.0.0",
+    "hexo": "^7.1.1",
     "hexo-abbrlink": "^2.2.1",
     "hexo-cli": "^4.3.1",
     "hexo-deployer-git": "^4.0.0",
